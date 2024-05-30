@@ -15,10 +15,10 @@ namespace SnakeGame
 
         static List<int[]> snake = new List<int[]>();
         static int[] food = new int[2];
-        static List<int[]> mines = new List<int[]>(); // 地雷列表
+        static List<int[]> mines = new List<int[]>(); // lista de mina
 
-        static int dx = 1; // 初始X方向
-        static int dy = 0; // 初始Y方向
+        static int dx = 1; // x
+        static int dy = 0; // y
 
         static void Main(string[] args)
         {
@@ -42,7 +42,7 @@ namespace SnakeGame
                 ResetGame();
                 DrawBorder();
                 DrawFood();
-                DrawMines(5); // 生成5个地雷
+                DrawMines(5);
                 DrawSnake();
 
                 Thread inputThread = new Thread(ReadInput);
@@ -66,7 +66,6 @@ namespace SnakeGame
                 Console.Write($"Score: {score}");
                 Console.SetCursorPosition(0, height + 1);
 
-                // 等待用户按键重新开始
                 Console.ReadKey();
             }
         }
@@ -86,7 +85,6 @@ namespace SnakeGame
             Console.ForegroundColor = ConsoleColor.White;
             Console.BackgroundColor = ConsoleColor.Black;
 
-            // 绘制水平边框
             for (int i = 0; i < width + 2; i++)
             {
                 Console.SetCursorPosition(i, 0);
@@ -95,7 +93,6 @@ namespace SnakeGame
                 Console.Write("+");
             }
 
-            // 绘制垂直边框
             for (int i = 1; i < height + 1; i++)
             {
                 Console.SetCursorPosition(0, i);
@@ -141,7 +138,7 @@ namespace SnakeGame
         {
             int[] newHead = { snake[0][0] + dx, snake[0][1] + dy };
 
-            // 检查蛇头是否撞到自身
+            // identificar si la cabeza si toca el cuerpo
             for (int i = 1; i < snake.Count; i++)
             {
                 if (newHead[0] == snake[i][0] && newHead[1] == snake[i][1])
@@ -151,14 +148,14 @@ namespace SnakeGame
                 }
             }
 
-            // 检查蛇头是否撞到边框
+            // identificar la cabeza si toca al fondo
             if (newHead[0] <= 0 || newHead[0] >= width + 1 || newHead[1] <= 0 || newHead[1] >= height + 1)
             {
                 gameOver = true;
                 return;
             }
 
-            // 检查蛇头是否踩到地雷
+            // identificar la cabeza si toca la mina
             foreach (var mine in mines)
             {
                 if (newHead[0] == mine[0] && newHead[1] == mine[1])
