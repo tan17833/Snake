@@ -15,9 +15,10 @@ namespace SnakeGame
 
         static List<int[]> snake = new List<int[]>();
         static int[] food = new int[2];
+        static List<int[]> mines = new List<int[]>(); // 地雷列表
 
-        static int dx = 1; // Dirección X inicial
-        static int dy = 0; // Dirección Y inicial
+        static int dx = 1; // 初始X方向
+        static int dy = 0; // 初始Y方向
 
         static void Main(string[] args)
         {
@@ -26,40 +27,58 @@ namespace SnakeGame
             Console.SetWindowSize(width + 1, height + 2);
             Console.SetBufferSize(width + 1, height + 2);
 
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.BackgroundColor = ConsoleColor.Black;
-            Console.Clear();
-
-            Console.SetCursorPosition(width / 2 - 5, height / 2);
-            Console.Write("Press any key to play");
-
-            Console.ReadKey();
-            Console.Clear();
-
-            DrawBorder();
-            DrawFood();
-            DrawSnake();
-
-            Thread inputThread = new Thread(ReadInput);
-            inputThread.Start();
-
-            while (!gameOver)
+            while (true)
             {
-                MoveSnake();
-                if (IsEatingFood())
-                {
-                    score++;
-                    DrawFood();
-                }
-                Thread.Sleep(delay);
-            }
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.Clear();
 
-            Console.SetCursorPosition(width / 2 - 5, height / 2);
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.Write("Game Over!");
-            Console.SetCursorPosition(width / 2 - 8, height / 2 + 1);
-            Console.Write($"Score: {score}");
-            Console.SetCursorPosition(0, height + 1);
+                Console.SetCursorPosition(width / 2 - 5, height / 2);
+                Console.Write("Press any key to play");
+
+                Console.ReadKey();
+                Console.Clear();
+
+                ResetGame();
+                DrawBorder();
+                DrawFood();
+                DrawMines(5); // 生成5个地雷
+                DrawSnake();
+
+                Thread inputThread = new Thread(ReadInput);
+                inputThread.Start();
+
+                while (!gameOver)
+                {
+                    MoveSnake();
+                    if (IsEatingFood())
+                    {
+                        score++;
+                        DrawFood();
+                    }
+                    Thread.Sleep(delay);
+                }
+
+                Console.SetCursorPosition(width / 2 - 5, height / 2);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.Write("Game Over!");
+                Console.SetCursorPosition(width / 2 - 8, height / 2 + 1);
+                Console.Write($"Score: {score}");
+                Console.SetCursorPosition(0, height + 1);
+
+                // 等待用户按键重新开始
+                Console.ReadKey();
+            }
+        }
+
+        static void ResetGame()
+        {
+            score = 0;
+            gameOver = false;
+            dx = 1;
+            dy = 0;
+            snake.Clear();
+            mines.Clear();
         }
 
         static void DrawBorder()
@@ -67,7 +86,7 @@ namespace SnakeGame
             Console.ForegroundColor = ConsoleColor.White;
             Console.BackgroundColor = ConsoleColor.Black;
 
-            // Draw horizontal borders
+            // 绘制水平边框
             for (int i = 0; i < width + 2; i++)
             {
                 Console.SetCursorPosition(i, 0);
@@ -76,7 +95,7 @@ namespace SnakeGame
                 Console.Write("+");
             }
 
-            // Draw vertical borders
+            // 绘制垂直边框
             for (int i = 1; i < height + 1; i++)
             {
                 Console.SetCursorPosition(0, i);
@@ -96,6 +115,19 @@ namespace SnakeGame
             Console.Write("$");
         }
 
+        static void DrawMines(int count)
+        {
+            mines.Clear();
+            for (int i = 0; i < count; i++)
+            {
+                int[] mine = { random.Next(1, width), random.Next(1, height) };
+                mines.Add(mine);
+                Console.SetCursorPosition(mine[0], mine[1]);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.Write("X");
+            }
+        }
+
         static void DrawSnake()
         {
             snake.Clear();
@@ -109,7 +141,7 @@ namespace SnakeGame
         {
             int[] newHead = { snake[0][0] + dx, snake[0][1] + dy };
 
-            // Verificar si la nueva cabeza colisiona con el cuerpo de la serpiente
+            // 检查蛇头是否撞到自身
             for (int i = 1; i < snake.Count; i++)
             {
                 if (newHead[0] == snake[i][0] && newHead[1] == snake[i][1])
@@ -119,10 +151,21 @@ namespace SnakeGame
                 }
             }
 
+            // 检查蛇头是否撞到边框
             if (newHead[0] <= 0 || newHead[0] >= width + 1 || newHead[1] <= 0 || newHead[1] >= height + 1)
             {
                 gameOver = true;
                 return;
+            }
+
+            // 检查蛇头是否踩到地雷
+            foreach (var mine in mines)
+            {
+                if (newHead[0] == mine[0] && newHead[1] == mine[1])
+                {
+                    gameOver = true;
+                    return;
+                }
             }
 
             Console.SetCursorPosition(snake[snake.Count - 1][0], snake[snake.Count - 1][1]);
@@ -153,23 +196,16 @@ namespace SnakeGame
                 switch (key.Key)
                 {
                     case ConsoleKey.UpArrow:
-                        dx = 0;
-                        dy = -1;
+                        if (dy == 0) { dx = 0; dy = -1; }
                         break;
                     case ConsoleKey.DownArrow:
-                        dx = 0;
-                        dy = 1;
+                        if (dy == 0) { dx = 0; dy = 1; }
                         break;
                     case ConsoleKey.LeftArrow:
-                        dx = -1;
-                        dy = 0;
+                        if (dx == 0) { dx = -1; dy = 0; }
                         break;
                     case ConsoleKey.RightArrow:
-                        dx = 1;
-                        dy = 0;
-                        break;
-                    default:
-                        gameOver = true;
+                        if (dx == 0) { dx = 1; dy = 0; }
                         break;
                 }
             }
